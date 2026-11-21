@@ -32,6 +32,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 label{display:block;color:var(--t)}
 #ts{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#10151c;color:#fff;padding:12px 20px;border-radius:12px;z-index:50;display:none;max-width:92vw;pointer-events:none;box-shadow:0 4px 14px #0007;text-align:center;font-size:17px;border:1px solid #455366}#ts.er{background:var(--r);border-color:#e68a84}
 #md{position:fixed;inset:0;background:#000b;display:none;place-items:center;z-index:20;padding:12px}#md>div{background:var(--c);color:var(--t);border:1px solid var(--b);border-radius:14px;padding:16px;max-width:560px;width:100%;max-height:90vh;overflow:auto}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:2px solid var(--b);border-radius:10px;margin:8px 0;cursor:pointer;background:var(--c2)}.opt input{margin-top:5px;flex:none}input[type=radio]{width:20px;height:20px;accent-color:var(--p2)}
+.scopebtn{font-size:19px;padding:12px 18px}header{flex-wrap:wrap}
 #lg{max-width:360px;margin:8vh auto 0;text-align:center}#lg img{background:#fff;border-radius:14px;padding:8px}#ft{text-align:center;font-size:12px;color:var(--m);padding:14px}
 </style></head><body>
 <div id="app"></div><div id="ft">تصميم Mahmoud Thabet</div><div id="md"><div id="mc"></div></div>
@@ -51,6 +53,8 @@ const SYN={
  qty:["quantity on hand","on hand","onhand","quantity","stock","available","balance","الكمية في اليد","الكمية المتوفرة","الكمية المتاحة","qty","كمية","رصيد","مخزون","متوفر","متاح"],
  unit:["unit of measure","uom","unit","وحدة القياس","وحدة","قياس"],
  loc:["location","warehouse","shelf","الموقع","موقع","مكان","مخزن","loc","رف"],
+ cat:["product category","product categ","category","categ","فئة المنتج","تصنيف المنتج","قسم المنتج","فئة","فئه","تصنيف","قسم","مجموعة","group","department","dept"],
+ fix:["تصحيح الفئة","تصحيح فئة","تصحيح التصنيف","category correction","corrected category","fixed category"],
  cnt:["counted quantity","counted","الكمية المحسوبة","محسوبة","جرد"]};
 const nh=s=>nz(s).replace(/[_\-./\\|()\[\]:،,]+/g," ").split(" ").filter(Boolean).map(w=>w.length>3&&w.startsWith("ال")?w.slice(2):w).join(" ");
 const SYNN={};for(const f in SYN)SYNN[f]=SYN[f].map(nh);
@@ -74,18 +78,18 @@ function parseMatrix(M,fields){
  if(fields.includes("bc")&&!("bc" in col)){for(let c=0;c<nc;c++){if(used.has(c))continue;const v=cv(c);if(v.length&&v.filter(x=>/^\d{6,14}$/.test(nd(x).replace(/\.0+$/,""))).length/v.length>=0.6){col.bc=c;how.bc="guess";used.add(c);break}}}
  if(fields.includes("name")&&!("name" in col)){let bi=-1,bl=0;for(let c=0;c<nc;c++){if(used.has(c))continue;const v=cv(c).filter(x=>isNaN(+nd(x).replace(/,/g,"")));if(!v.length)continue;const l=v.reduce((a,x)=>a+x.length,0)/v.length;if(l>bl){bl=l;bi=c}}if(bi>=0&&bl>=3){col.name=bi;how.name="guess"}}
  const cell=(r,f)=>col[f]==null?"":r[col[f]],S=v=>String(v==null?"":v).trim(),rows=[];let skipped=0;
- data.forEach(r=>{const o={ext:S(cell(r,"ext")),bc:nd(S(cell(r,"bc"))).replace(/\.0+$/,""),n:S(cell(r,"name")).replace(/\s+/g," "),cost:num(cell(r,"cost")),price:num(cell(r,"price")),sys:num(cell(r,"qty")),cnt:num(cell(r,"cnt")),unit:S(cell(r,"unit")),loc:S(cell(r,"loc"))};
+ data.forEach(r=>{const o={ext:S(cell(r,"ext")),bc:nd(S(cell(r,"bc"))).replace(/\.0+$/,""),n:S(cell(r,"name")).replace(/\s+/g," "),cost:num(cell(r,"cost")),price:num(cell(r,"price")),sys:num(cell(r,"qty")),cnt:num(cell(r,"cnt")),unit:S(cell(r,"unit")),loc:S(cell(r,"loc")),cat:S(cell(r,"cat")),fix:S(cell(r,"fix"))};
   if(!o.ext&&!o.bc&&!o.n){skipped++;return}rows.push(o)});
  return{hdr,heads,col,how,rows,skipped,missing:fields.filter(f=>!(f in col))}}
 function aggregate(files){const st=new Map(),nn=new Map(),b2e=new Map();let conf=0;
- const add=(m,key,r)=>{let e=m.get(key);if(!e){e={ext:r.ext,bc:r.bc,n:r.n,cost:r.cost,price:r.price,sys:r.sys,cnt:0,unit:r.unit,loc:r.loc,nf:0};m.set(key,e)}else{if(!e.bc&&r.bc)e.bc=r.bc;if(!e.n&&r.n)e.n=r.n;if(!e.cost&&r.cost)e.cost=r.cost;if(!e.price&&r.price)e.price=r.price;if(!e.unit&&r.unit)e.unit=r.unit;if(!e.loc&&r.loc)e.loc=r.loc;if(!e.sys&&r.sys)e.sys=r.sys;else if(r.sys&&r.sys!=e.sys)conf++}e.cnt=r3(e.cnt+r.cnt);e.nf++};
+ const add=(m,key,r)=>{let e=m.get(key);if(!e){e={ext:r.ext,bc:r.bc,n:r.n,cost:r.cost,price:r.price,sys:r.sys,cnt:0,unit:r.unit,loc:r.loc,cat:r.cat||"",fix:r.fix||"",nf:0};m.set(key,e)}else{if(!e.cat&&r.cat)e.cat=r.cat;if(!e.fix&&r.fix)e.fix=r.fix;if(!e.bc&&r.bc)e.bc=r.bc;if(!e.n&&r.n)e.n=r.n;if(!e.cost&&r.cost)e.cost=r.cost;if(!e.price&&r.price)e.price=r.price;if(!e.unit&&r.unit)e.unit=r.unit;if(!e.loc&&r.loc)e.loc=r.loc;if(!e.sys&&r.sys)e.sys=r.sys;else if(r.sys&&r.sys!=e.sys)conf++}e.cnt=r3(e.cnt+r.cnt);e.nf++};
  files.forEach(f=>f.rows.forEach(r=>{if(r.ext){add(st,r.ext,r);if(r.bc&&!b2e.has(r.bc))b2e.set(r.bc,r.ext)}}));
  files.forEach(f=>f.rows.forEach(r=>{if(r.ext)return;const e=r.bc&&b2e.get(r.bc);if(e){add(st,e,r);return}add(nn,r.bc?"b:"+r.bc:"n:"+nz(r.n),r)}));
  return{stock:[...st.values()],non:[...nn.values()],conf}}
-const rr=(e,t)=>{const d=r3(e.cnt-e.sys);return{ext:e.ext,bc:e.bc,n:e.n,cost:e.cost,sys:e.sys,cnt:e.cnt,diff:d,vSys:r2(e.cost*e.sys),vCnt:r2(e.cost*e.cnt),vDiff:r2(e.cost*d),st:t||(d>0?"زيادة":d<0?"عجز":"مطابق")}};
+const rr=(e,t)=>{const d=r3(e.cnt-e.sys);return{cat:e.cat||"",fix:e.fix||"",ext:e.ext,bc:e.bc,n:e.n,cost:e.cost,sys:e.sys,cnt:e.cnt,diff:d,vSys:r2(e.cost*e.sys),vCnt:r2(e.cost*e.cnt),vDiff:r2(e.cost*d),st:t||(d>0?"زيادة":d<0?"عجز":"مطابق")}};
 function repRows(res,unc){const R=[];res.stock.forEach(e=>R.push(rr(e,"")));res.non.forEach(e=>R.push(rr(e,"غير مسجل")));
  if(unc&&unc.length){const sE=new Set(),sB=new Set();res.stock.forEach(e=>{if(e.ext)sE.add(e.ext);if(e.bc)sB.add(e.bc)});res.non.forEach(e=>{if(e.bc)sB.add(e.bc)});
-  unc.forEach(p=>{if(!(+p.qty))return;const ext=String(p.ext||"").trim(),bc=String(p.bc||"").trim();if((ext&&sE.has(ext))||(bc&&sB.has(bc)))return;R.push(rr({ext,bc,n:p.name,cost:+p.cost||0,price:+p.price||0,sys:+p.qty||0,cnt:0},"لم يُجرد"))})}
+  unc.forEach(p=>{if(!(+p.qty))return;const ext=String(p.ext||"").trim(),bc=String(p.bc||"").trim();if((ext&&sE.has(ext))||(bc&&sB.has(bc)))return;R.push(rr({cat:p.cat||"",ext,bc,n:p.name,cost:+p.cost||0,price:+p.price||0,sys:+p.qty||0,cnt:0},"لم يُجرد"))})}
  return R}
 function sortRows(rows,key,dir){const m=dir=="asc"?1:-1;return rows.slice().sort((a,b)=>(a[key]-b[key])*m||String(a.n).localeCompare(String(b.n),"ar"))}
 function summary(rows){const S={n:0,nSys:0,cnt:0,sys:0,over:0,short:0};rows.forEach(r=>{if(r.st!="لم يُجرد")S.n++;S.cnt+=r.vCnt;if(r.sys>0){S.nSys++;S.sys+=r.vSys}if(r.vDiff>0)S.over+=r.vDiff;else if(r.vDiff<0)S.short+=r.vDiff});
@@ -146,7 +150,7 @@ if(!db.users.some(u=>u.n=="1111"))db.users.unshift({n:"1111",pw:"1111",role:"adm
 if(!Array.isArray(db.files))db.files=[];
 if(localStorage.getItem("badr_ver")!="4"){db={products:[],users:db.users,files:db.files,last:db.last};try{localStorage.removeItem("badr");localStorage.setItem("badr_ver","4")}catch(e){}}
 let CS=null;try{CS=JSON.parse(localStorage.getItem("badr_count"))}catch(e){}
-if(CS&&(!CS.items||!CS.fname))CS=null;
+if(CS&&(!CS.items||!CS.fname))CS=null;if(CS&&!CS.fix)CS.fix={};
 const save=()=>{try{localStorage.setItem("badr2",JSON.stringify(db))}catch(e){toast("المساحة ممتلئة - تعذر الحفظ",1)}};
 const saveCS=()=>{try{if(CS)localStorage.setItem("badr_count",JSON.stringify(CS));else localStorage.removeItem("badr_count")}catch(e){toast("المساحة ممتلئة - تعذر حفظ الجرد",1)}};
 save();
@@ -210,9 +214,9 @@ function logout(){me=null;cc=null;AG.files=[];AG.res=null;draw()}
 function draw(){
  if(!me){$("#app").innerHTML=`<div class="card" id="lg"><img src="${LOGO}" alt="أسواق بدر" style="width:220px;max-width:100%"><div class="row" style="flex-direction:column;align-items:stretch"><input id="un" data-d="s" placeholder="اسم المستخدم" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();$('#pw').focus()}"><input id="pw" data-d="all" type="password" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter'){event.preventDefault();login()}"><button class="btn" onclick="login()">${ic("login")} دخول</button></div></div>`;$("#un").focus();return}
  const al=allowed();if(!al.includes(view))view=al[0];
- $("#app").innerHTML=`<header><img class="lg" src="${ICON}" alt=""><b>أسواق بدر</b><small>${ic("user",18)} ${esc(me.n)}</small><button class="btn o" title="تبديل الوضع الليلي/النهاري" onclick="tgTheme()">${ic(th()=="dark"?"sun":"moon",22)}</button><button class="btn a" onclick="logout()">${ic("logout")} خروج</button></header><nav>${V.filter(v=>al.includes(v[0])).map(v=>`<button class="${v[0]==view?"on":""}" onclick="view='${v[0]}';draw()">${ic(v[2],36)}<span>${v[1]}</span></button>`).join("")}</nav><main id="mn"></main>`;R[view]()}
+ $("#app").innerHTML=`<header><img class="lg" src="${ICON}" alt=""><b>أسواق بدر</b><small>${ic("user",18)} ${esc(me.n)}</small><button class="btn o" title="تبديل الوضع الليلي/النهاري" onclick="tgTheme()">${ic(th()=="dark"?"sun":"moon",22)}</button><button class="btn a" onclick="logout()">${ic("logout")} خروج</button><button class="btn ${db.scope?"a":"o"} scopebtn" title="جرد الأقسام" onclick="scopeDlg()">${ic("layers",28)} جرد الأقسام${db.scope?" ("+db.scope.length+")":""}</button></header><nav>${V.filter(v=>al.includes(v[0])).map(v=>`<button class="${v[0]==view?"on":""}" onclick="view='${v[0]}';draw()">${ic(v[2],36)}<span>${v[1]}</span></button>`).join("")}</nav><main id="mn"></main>`;R[view]()}
 const prodCard=()=>me.role=="user"?"":`<div class="card"><h3>${ic("box")} بيانات المنتجات</h3><div class="row"><span class="k">عدد المنتجات المحفوظة: <b>${db.products.length}</b></span></div><div class="row" style="margin-top:8px"><button class="btn a" onclick="$('#fi').click()">${ic("download")} استيراد بيانات المنتجات</button><button class="btn o" onclick="tplExp()">${ic("file")} تصدير شيت فارغ</button>${db.products.length?`<button class="btn r" onclick="wipeP()">${ic("trash")} مسح بيانات المنتجات</button>`:""}<input id="fi" type="file" accept=".xlsx,.xls,.xlsm,.csv,.ods,.txt" hidden onchange="imp(event)"></div></div>`;
-function tplExp(){const w=XLSX.utils.book_new();XLSX.utils.book_append_sheet(w,XLSX.utils.aoa_to_sheet([["معرف خارجي","باركود","الاسم","cost","price","الكمية في اليد","وحدة القياس","الموقع"]]),"المنتجات");dl(w,"شيت بيانات المنتجات فارغ.xlsx","قوالب")}
+function tplExp(){const w=XLSX.utils.book_new();XLSX.utils.book_append_sheet(w,XLSX.utils.aoa_to_sheet([["معرف خارجي","باركود","الاسم","فئة المنتج","cost","price","الكمية في اليد","وحدة القياس","الموقع"]]),"المنتجات");dl(w,"شيت بيانات المنتجات فارغ.xlsx","قوالب")}
 const dateAr=i=>{const a=String(i).split("-");return +a[2]+" "+MON[a[1]-1]+" "+a[0]};
 function clk(){const e=$("#clk");if(e){const d=new Date();e.textContent=pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds())}}
 setInterval(clk,1000);
@@ -223,8 +227,8 @@ count(){
  if(!CS){startScr();return}
  const ks=Object.keys(CS.items),root=me.role=="root",tv=root?ks.reduce((a,k)=>a+CS.items[k].q*CS.items[k].cost,0):0,c=cc,it=c&&CS.items[c.key];
  const lg=CS.log.map((l,i)=>[l,i]).reverse().map(x=>{const l=x[0],i=x[1];return[esc(l.t),esc(l.n),l.m=="a"?"إضافة +"+l.d:"استبدال ("+l.from+" ← "+l.q+")",CS.items[l.k]?CS.items[l.k].q:"—",CS.items[l.k]?`<button class="btn o" onclick="opEdit(${i})">${ic("edit")} تعديل الإجمالي</button> <button class="btn r" title="حذف الصنف من الجرد" onclick="opDel(${i})">${ic("trash")}</button>`:"—"]});
- const card=c?`<div class="card" style="background:var(--bg);margin-top:10px"><b style="font-size:18px">${esc(c.name)}</b><div class="k">الموقع: ${esc(c.loc||"—")}</div>${me.role!="user"?`<div>الكمية في النظام: <b>${c.qty}</b></div>`:""}${it?`<div class="warn">${ic("alert",20)} منتج مجرود مسبقًا</div><div class="row" style="margin:6px 0"><span>الكمية المسجلة (الإجمالي):</span><input id="qe" data-d="all" inputmode="decimal" autocomplete="off" value="${it.q}" style="width:100px" onkeydown="if(event.key==='Enter'){event.preventDefault();cok(0)}"><button class="btn" onclick="cok(0)">${ic("edit")} استبدال الكمية المسجلة</button></div><div class="row" style="margin:6px 0"><span>إضافة كمية جديدة:</span><input id="qy" data-d="all" inputmode="decimal" autocomplete="off" placeholder="الكمية" style="width:100px" oninput="cpv()" onkeydown="if(event.key==='Enter'){event.preventDefault();cok(1)}"><button class="btn o" title="لوحة أرقام" onclick="kp('qy')">${ic("grid")}</button><button class="btn a" onclick="cok(1)">${ic("plus")} إضافة</button></div><div>الإجمالي بعد الإضافة: <b id="pv">${it.q}</b></div>`:`<div class="row" style="margin:6px 0"><input id="qy" data-d="all" inputmode="decimal" autocomplete="off" placeholder="الكمية" style="width:120px" onkeydown="if(event.key==='Enter'){event.preventDefault();cok(1)}"><button class="btn o" title="لوحة أرقام" onclick="kp('qy')">${ic("grid")}</button><button class="btn a" onclick="cok(1)">${ic("check")} حفظ</button></div>`}<div class="row"><button class="btn o" onclick="cc=null;R.count()">${ic("x")} إلغاء</button></div><div id="ch" style="color:var(--r);min-height:20px"></div></div>`:"";
- $("#mn").innerHTML=`<div class="card"><div class="row"><b>${ic("user",20)} ${esc(CS.emp)}</b><b>${ic("pin",20)} ${esc(CS.br)}</b><span>${ic("cal",20)} ${dateAr(CS.iso)}</span><span>${ic("box",20)} ${ks.length} منتج مجرود</span>${root?`<span>${ic("dollar",20)} القيمة ${f2(tv)}</span>`:""}</div><div class="k" id="ls">${ic("clock",16)} ${esc(lsTxt())}</div><div id="clk" class="clk"></div><div class="row"><button class="btn a" title="تصدير الجرد (Ctrl+S)" onclick="expInv()">${ic("upload")} تصدير الجرد</button><button class="btn r" onclick="cfin()">${ic("flag")} إنهاء الجرد</button></div></div>
+ const card=c?`<div class="card" style="background:var(--bg);margin-top:10px"><b style="font-size:18px">${esc(c.name)}</b><div class="k">الفئة: ${esc(c.cat||"—")}${c.fix?` ← <b>تصحيح: ${esc(c.fix)}</b>`:""} — الموقع: ${esc(c.loc||"—")}</div>${me.role!="user"?`<div>الكمية في النظام: <b>${c.qty}</b></div>`:""}${it?`<div class="warn">${ic("alert",20)} منتج مجرود مسبقًا</div><div class="row" style="margin:6px 0"><span>الكمية المسجلة (الإجمالي):</span><input id="qe" data-d="all" inputmode="decimal" autocomplete="off" value="${it.q}" style="width:100px" onkeydown="if(event.key==='Enter'){event.preventDefault();cok(0)}"><button class="btn" onclick="cok(0)">${ic("edit")} استبدال الكمية المسجلة</button></div><div class="row" style="margin:6px 0"><span>إضافة كمية جديدة:</span><input id="qy" data-d="all" inputmode="decimal" autocomplete="off" placeholder="الكمية" style="width:100px" oninput="cpv()" onkeydown="if(event.key==='Enter'){event.preventDefault();cok(1)}"><button class="btn o" title="لوحة أرقام" onclick="kp('qy')">${ic("grid")}</button><button class="btn a" onclick="cok(1)">${ic("plus")} إضافة</button></div><div>الإجمالي بعد الإضافة: <b id="pv">${it.q}</b></div>`:`<div class="row" style="margin:6px 0"><input id="qy" data-d="all" inputmode="decimal" autocomplete="off" placeholder="الكمية" style="width:120px" onkeydown="if(event.key==='Enter'){event.preventDefault();cok(1)}"><button class="btn o" title="لوحة أرقام" onclick="kp('qy')">${ic("grid")}</button><button class="btn a" onclick="cok(1)">${ic("check")} حفظ</button></div>`}<div class="row"><button class="btn o" onclick="cc=null;R.count()">${ic("x")} إلغاء</button></div><div id="ch" style="color:var(--r);min-height:20px"></div></div>`:"";
+ $("#mn").innerHTML=`<div class="card"><div class="row"><b>${ic("user",20)} ${esc(CS.emp)}</b><b>${ic("pin",20)} ${esc(CS.br)}</b><span>${ic("cal",20)} ${dateAr(CS.iso)}</span><span>${ic("box",20)} ${ks.length} منتج مجرود</span>${root?`<span>${ic("dollar",20)} القيمة ${f2(tv)}</span>`:""}</div>${db.scope?`<div class="warn">${ic("layers",20)} جرد الأقسام: <b>${esc(scopeTxt())}</b></div>`:""}<div class="k" id="ls">${ic("clock",16)} ${esc(lsTxt())}</div><div id="clk" class="clk"></div><div class="row"><button class="btn a" title="تصدير الجرد (Ctrl+S)" onclick="expInv()">${ic("upload")} تصدير الجرد</button><button class="btn r" onclick="cfin()">${ic("flag")} إنهاء الجرد</button></div></div>
 <div class="card"><h3>${ic("clipboard")} الجرد</h3>${CAM?`<button class="btn a" style="width:100%;font-size:22px;padding:16px;margin-bottom:8px" onclick="scan(camPick)">${ic("camera",30)} مسح الباركود بالكاميرا</button><label><input type="checkbox" ${db.camAuto!==false?"checked":""} onchange="db.camAuto=this.checked;save()"> فتح الكاميرا تلقائيًا بعد كل حفظ</label>`:""}<div class="row"><input id="bc" data-d="s" autocomplete="off" placeholder="باركود أو اسم (F2)" style="flex:1" oninput="csg(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();cpick(this.value)}"></div><div id="sg"></div>${card}</div>
 <div class="card"><h3>${ic("clock")} آخر 15 عملية</h3>${lg.length?tbl(["الوقت","الصنف","العملية","الإجمالي الحالي",""],lg):'<p class="k">لا توجد عمليات بعد.</p>'}</div>${prodCard()}`;
  clk();const q=$("#qy");if(q)q.focus();else if(!CAM)$("#bc").focus()},
@@ -234,14 +238,14 @@ agg(){
  if(!me||me.role!="root"){view="price";return draw()}
  const F=AG.files,tc=F.reduce((s,f)=>s+f.cnt,0),tv=F.reduce((s,f)=>s+f.val,0),brs=[...new Set(F.map(f=>f.br).filter(x=>x&&x!="—"))];
  let h=`<div class="card"><h3>${ic("layers")} تجميع الجرد</h3><div class="row"><button class="btn a" onclick="$('#af').click()">${ic("download")} استيراد شيتات الجرد من الكمبيوتر</button><input id="af" type="file" multiple accept=".xlsx,.xls,.csv" hidden onchange="agImp(event)">${F.length?`<button class="btn r" onclick="agClr()">${ic("trash")} مسح القائمة</button>`:""}</div>`;
- h+=F.length?tbl(["#","اسم الشيت","الموظف","الفرع","عدد المنتجات","القيمة",""],F.map((f,i)=>[i+1,esc(f.name),esc(f.emp),esc(f.br),f.cnt,f2(f.val),`<button class="btn r" onclick="agDel(${i})">${ic("x")}</button>`]))+`<p><b>${F.length}</b> ملف • <b>${tc}</b> صنف • القيمة <b>${f2(tv)}</b></p>`:'<p class="k">لم يتم استيراد أي ملف بعد. يمكنك اختيار عدة ملفات مرة واحدة.</p>';
+ h+=F.length?tbl(["#","اسم الشيت","الموظف","الفرع","الأقسام","عدد المنتجات","القيمة",""],F.map((f,i)=>[i+1,esc(f.name),esc(f.emp),esc(f.br),esc(f.sc||"الكل"),f.cnt,f2(f.val),`<button class="btn r" onclick="agDel(${i})">${ic("x")}</button>`]))+`<p><b>${F.length}</b> ملف • <b>${tc}</b> صنف • القيمة <b>${f2(tv)}</b></p>`:'<p class="k">لم يتم استيراد أي ملف بعد. يمكنك اختيار عدة ملفات مرة واحدة.</p>';
  if(brs.length>1)h+=`<div class="warn">${ic("alert",20)} تنبيه: الملفات من أكثر من فرع (${esc(brs.join("، "))}) وسيتم دمجها معًا.</div>`;
  if(F.length)h+=`<label><input type="checkbox" id="ui"${AG.inc?" checked":""}> اعتبار المنتجات غير المجرودة (من قائمة المنتجات المحفوظة وكميتها في اليد أكبر من صفر) عجزًا في التقرير</label><br><br><button class="btn a" onclick="agRun()">${ic("layers")} تجميع المنتجات وإنشاء التقرير</button>`;
  h+="</div>";
  if(AG.res&&AG.rows){const S=AG.S,rows=sortRows(AG.rows,AG.ord,AG.dir),O=[["vCnt","إجمالي تكلفة المجرود"],["sys","الكمية في اليد"],["cnt","الكمية المحسوبة"],["diff","الفرق (كمية)"],["vDiff","قيمة الفرق"]];
   h+=`<div class="card"><h3>${ic("check")} النتيجة</h3><div class="g">${[["أصناف في المخزون",AG.res.stock.length],["أصناف ليست في المخزون",AG.res.non.length],["إجمالي تكلفة المجرود",f2(S.cnt)],["إجمالي تكلفة ما له كمية في اليد",f2(S.sys)],["الفرق ("+S.res+")",f2(Math.abs(S.net))]].map(x=>`<div class="card"><div class="k">${x[0]}</div><div class="big">${x[1]}</div></div>`).join("")}</div>${AG.res.conf?`<div class="warn">${ic("alert",20)} تنبيه: اختلفت كمية النظام لبعض الأصناف بين الملفات (${AG.res.conf} حالة) وتم اعتماد أول قيمة.</div>`:""}
   <div class="row"><button class="btn" onclick="agExpA()">${ic("upload")} تصدير المنتجات المجمّعة (شيتين)</button><button class="btn" onclick="agExpR()">${ic("upload")} تصدير تقرير الجرد والملخص</button><button class="btn a" onclick="agExpAll()">${ic("upload")} تصدير الكل</button></div></div>
-  <div class="card"><h3>${ic("file")} تقرير الجرد</h3><div class="row"><label>ترتيب حسب <select id="so" onchange="AG.ord=this.value;R.agg()">${O.map(o=>`<option value="${o[0]}"${AG.ord==o[0]?" selected":""}>${o[1]}</option>`).join("")}</select></label><select id="sd" onchange="AG.dir=this.value;R.agg()"><option value="desc"${AG.dir=="desc"?" selected":""}>تنازلي</option><option value="asc"${AG.dir=="asc"?" selected":""}>تصاعدي</option></select></div>${tbl(["المنتج","التكلفة","اليد","المحسوب","الفرق","قيمة المجرود","قيمة الفرق","الحالة"],rows.slice(0,200).map(r=>[esc(r.n),f2(r.cost),r.sys,r.cnt,r.diff,f2(r.vCnt),f2(r.vDiff),esc(r.st)]))}${rows.length>200?`<p class="k">عرض أول 200 سطر من ${rows.length} — التصدير يشمل الكل.</p>`:""}</div>`}
+  <div class="card"><h3>${ic("file")} تقرير الجرد</h3><div class="row"><label>ترتيب حسب <select id="so" onchange="AG.ord=this.value;R.agg()">${O.map(o=>`<option value="${o[0]}"${AG.ord==o[0]?" selected":""}>${o[1]}</option>`).join("")}</select></label><select id="sd" onchange="AG.dir=this.value;R.agg()"><option value="desc"${AG.dir=="desc"?" selected":""}>تنازلي</option><option value="asc"${AG.dir=="asc"?" selected":""}>تصاعدي</option></select></div>${tbl(["المنتج","الفئة","التكلفة","اليد","المحسوب","الفرق","قيمة المجرود","قيمة الفرق","الحالة"],rows.slice(0,200).map(r=>[esc(r.n),esc(r.cat),f2(r.cost),r.sys,r.cnt,r.diff,f2(r.vCnt),f2(r.vDiff),esc(r.st)]))}${rows.length>200?`<p class="k">عرض أول 200 سطر من ${rows.length} — التصدير يشمل الكل.</p>`:""}</div>`}
  $("#mn").innerHTML=h}
 };
 /* ---------- الجرد ---------- */
@@ -252,39 +256,59 @@ function cstart(){const e=$("#en").value.trim().replace(/\s+/g," "),b=$("#eb").v
  const d=new Date(),day=isoD(d),base=sanit(`${e} ${b} ${d.getDate()} ${MON[d.getMonth()]}`);let n=1,name=base;
  while(db.files.some(x=>x.name==name&&x.d==day)){n++;name=base+" ("+n+")"}
  db.files.push({name,d:day});db.files=db.files.slice(-300);db.last={e,b};save();
- CS={emp:e,br:b,iso:day,fname:name,start:tmS(d),items:{},log:[]};cc=null;lastSave="";saveCS();R.count()}
-const mk=p=>({key:pk(p),name:p.name,ext:p.ext||"",bc:String(p.bc||""),cost:+p.cost||0,price:+p.price||0,qty:+p.qty||0,unit:p.unit||"",loc:p.loc||"",unk:0});
+ CS={emp:e,br:b,iso:day,fname:name,start:tmS(d),items:{},log:[],fix:{}};cc=null;lastSave="";saveCS();R.count()}
+const mk=p=>({key:pk(p),name:p.name,ext:p.ext||"",bc:String(p.bc||""),cost:+p.cost||0,price:+p.price||0,qty:+p.qty||0,unit:p.unit||"",loc:p.loc||"",cat:String(p.cat||"").trim(),fix:(CS&&CS.fix&&CS.fix[pk(p)])||"",unk:0});
 function csg(v){const m=fnd(v),s=String(v).trim();if(!s){$("#sg").innerHTML="";return}
  $("#sg").innerHTML=m.length?m.map(p=>`<button class="btn o" style="margin:2px" data-b="${esc(pk(p))}" onclick="cscan(this.dataset.b)">${esc(p.name)} — ${f2(p.price)}</button>`).join(""):'<p class="k" style="color:var(--r)">باركود غير موجود</p>'}
 function camAgain(){if(CAM&&db.camAuto!==false)setTimeout(()=>{if(CS&&me&&view=="count"&&$("#md").style.display!="grid")scan(camPick)},700)}
-const camPick=c=>cpick(c,1);
-function cpick(v,fc){v=nd(v).trim();if(!v)return;if(look(v))return cscan(v);const m=fnd(v);if(m.length==1)return cscan(pk(m[0]));if(m.length>1)return csg(v);toast("باركود غير موجود",1);const b=$("#bc");if(b)b.select();if(fc)camAgain()}
-function cscan(v){const r=look(v);if(!r){toast("باركود غير موجود",1);return}cc=mk(r.p);cmode=1;R.count();if(r.w){$("#qy").value=r.w;cpv()}}
+const camPick=c=>{window._fc=1;cpick(c,1)};
+function cpick(v,fc){if(!fc)window._fc=0;v=nd(v).trim();if(!v)return;if(look(v))return cscan(v);const m=fnd(v);if(m.length==1)return cscan(pk(m[0]));if(m.length>1)return csg(v);toast("باركود غير موجود",1);const b=$("#bc");if(b)b.select();if(fc)camAgain()}
+function cscan(v){const r=look(v);if(!r){toast("باركود غير موجود",1);return}if(!inScope(r.p)){catErr(r.p);return}cc=mk(r.p);cmode=1;R.count();if(r.w){$("#qy").value=r.w;cpv()}}
 function cpv(){const e=$("#pv");if(!e||!cc||!CS)return;const t=CS.items[cc.key];e.textContent=Math.round(((t?t.q:0)+ev($("#qy").value))*1000)/1000}
 function cok(mode){
  if(!cc||!CS)return;const k=cc.key,it=CS.items[k],el=$(mode==0&&it?"#qe":"#qy");if(!el)return;const raw=el.value;
  if(String(raw).trim()===""){hint("اكتب الكمية أولاً");el.focus();return}
  if(!/\d/.test(nd(raw))){hint("كمية غير صحيحة");el.select();return}
  const q=ev(raw);if(q<0){hint("لا يمكن إدخال كمية سالبة");el.select();return}
- let t=it;if(!t)t=CS.items[k]={q:0,ext:cc.ext,bc:cc.bc,n:cc.name,cost:cc.cost,price:cc.price,sys:cc.unk?0:cc.qty,unit:cc.unit,loc:cc.loc,unk:cc.unk};
+ let t=it;if(!t)t=CS.items[k]={q:0,ext:cc.ext,bc:cc.bc,n:cc.name,cost:cc.cost,price:cc.price,sys:cc.unk?0:cc.qty,unit:cc.unit,loc:cc.loc,cat:cc.cat||"",fix:cc.fix||"",unk:cc.unk};
  const before=t.q;t.q=mode?Math.round((t.q+q)*1000)/1000:q;
  CS.log.push({k,n:cc.name,t:tmS(),m:mode?"a":"s",d:q,from:before,q:t.q});CS.log=CS.log.slice(-15);
  cc=null;cmode=1;saveCS();asv();R.count();camAgain()}
-function opEdit(i){const l=CS.log[i],t=l&&CS.items[l.k];if(!t)return;
- modal(`<h3>${ic("edit")} تعديل إجمالي الكمية المجرودة</h3><p><b>${esc(t.n)}</b><br><span class="k">الإجمالي الحالي: ${t.q} — اكتب الإجمالي الجديد وسيستبدل الكمية المسجلة</span></p><input id="oe" data-d="all" inputmode="decimal" value="${t.q}" style="width:100%;font-size:24px" onkeydown="if(event.key==='Enter'){event.preventDefault();opOk(${i})}"><div id="oh" style="color:var(--r);min-height:22px"></div><div class="row"><button class="btn a" onclick="opOk(${i})">${ic("check")} حفظ</button><button class="btn o" onclick="closeM()">${ic("x")} إلغاء</button></div>`);$("#oe").focus();$("#oe").select()}
-function opOk(i){const l=CS.log[i],raw=$("#oe").value,t=l&&CS.items[l.k];if(!t){closeM();return}
+const NOCAT="بدون فئة";
+function cats(){const m=new Map();let any=false,none=0;db.products.forEach(p=>{const c=String(p.cat||"").trim();if(c){any=true;m.set(c,(m.get(c)||0)+1)}else none++});const a=[...m.entries()].sort((x,y)=>x[0].localeCompare(y[0],"ar"));if(any&&none)a.push([NOCAT,none]);return a}
+const effCat=p=>(CS&&CS.fix&&CS.fix[pk(p)])||String(p.cat||"").trim()||NOCAT;
+const inScope=p=>!db.scope||db.scope.includes(effCat(p));
+const scopeTxt=()=>db.scope&&db.scope.length?db.scope.join("، "):"الكل";
+function scopeDlg(){const C=cats();
+ modal(`<h3>${ic("layers")} جرد الأقسام</h3>${C.length?`<label class="opt"><input type="checkbox" id="sca" ${!db.scope?"checked":""} onchange="scAll()"><b>جرد الكل</b></label><div style="max-height:50vh;overflow:auto">${C.map(c=>`<label class="opt"><input type="checkbox" class="scc" data-c="${esc(c[0])}" ${db.scope&&db.scope.includes(c[0])?"checked":""} onchange="scOne()"><span>${esc(c[0])} <span class="k">(${c[1]})</span></span></label>`).join("")}</div>`:`<div class="warn">${ic("alert",20)} لا توجد فئات. استورد شيت منتجات يحتوي عمود «فئة المنتج» أو category.</div>`}<div class="row" style="margin-top:10px"><button class="btn a" onclick="scApply()">${ic("check")} تطبيق</button><button class="btn o" onclick="closeM()">${ic("x")} إلغاء</button></div>`);
+ const f=$("#sca");if(f)f.focus()}
+function scAll(){if($("#sca").checked)document.querySelectorAll(".scc").forEach(x=>x.checked=false)}
+function scOne(){const a=$("#sca");if(a)a.checked=![...document.querySelectorAll(".scc")].some(x=>x.checked)}
+function scApply(){const sel=[...document.querySelectorAll(".scc")].filter(x=>x.checked).map(x=>x.dataset.c);db.scope=sel.length?sel:null;save();closeM();view="count";draw();toast(db.scope?"جرد الأقسام: "+scopeTxt():"جرد الكل")}
+function catErr(p){window._cp=p;
+ modal(`<h3>${ic("alert")} خطأ في الفئة</h3><p><b>${esc(p.name)}</b><br>فئة المنتج: <b>${esc(effCat(p))}</b><br><span class="k">الأقسام المحددة للجرد: ${esc(scopeTxt())}</span></p><p>هذا المنتج لا يتبع الأقسام المحددة للجرد.</p><div class="row"><button class="btn r" id="cx" onclick="catExcl()">${ic("x")} استبعاد المنتج</button><button class="btn a" onclick="catChg()">${ic("edit")} تعديل الفئة</button></div>`);$("#cx").focus()}
+function catExcl(){closeM();const p=window._cp,k=pk(p);if(CS&&CS.items[k]){delete CS.items[k];CS.log=CS.log.filter(x=>x.k!=k);saveCS();asv()}toast("تم استبعاد المنتج من الجرد");R.count();if(window._fc){window._fc=0;camAgain()}}
+function catChg(){const p=window._cp,C=cats().filter(c=>c[0]!=NOCAT),cur=String(p.cat||"").trim(),pre=db.scope&&db.scope.find(x=>x!=NOCAT);
+ modal(`<h3>${ic("edit")} تغيير فئة المنتج</h3><p><b>${esc(p.name)}</b><br><span class="k">الفئة الحالية: ${esc(cur||NOCAT)}</span></p><select id="ncat" style="width:100%">${C.map(c=>`<option value="${esc(c[0])}"${c[0]==(pre||cur)?" selected":""}>${esc(c[0])}</option>`).join("")}</select><div class="row" style="margin-top:10px"><button class="btn a" onclick="catSave()">${ic("check")} حفظ الفئة</button><button class="btn o" onclick="closeM()">${ic("x")} إلغاء</button></div>`);$("#ncat").focus()}
+function catSave(){const p=window._cp,v=$("#ncat").value,k=pk(p);if(CS){CS.fix=CS.fix||{};CS.fix[k]=v;if(CS.items[k])CS.items[k].fix=v;saveCS();asv()}closeM();window._fc=0;cscan(k)}
+function opEdit(i){const l=CS.log[i],t=l&&CS.items[l.k];if(!t)return;let li=-1;CS.log.forEach((x,j)=>{if(x.k==l.k)li=j});const L=CS.log[li],lv=L.m=="a"?L.d:L.q;window._ol=li;window._lv=lv;
+ modal(`<h3>${ic("edit")} تعديل «${esc(t.n)}»</h3><label class="opt"><input type="radio" name="om" value="t" checked onchange="omSet()"><span>الخيار 1: تعديل الكمية كلها (الإجمالي الحالي: <b>${t.q}</b>)</span></label><label class="opt"><input type="radio" name="om" value="l" onchange="omSet()"><span>الخيار 2: تعديل الكمية الأخيرة فقط (${L.m=="a"?"آخر إضافة":"آخر استبدال"}: <b>${lv}</b>)</span></label><div class="k" id="ot">اكتب الإجمالي الجديد وسيستبدل الكمية المسجلة</div><input id="oe" data-d="all" inputmode="decimal" value="${t.q}" style="width:100%;font-size:24px" onkeydown="if(event.key==='Enter'){event.preventDefault();opOk()}"><div id="oh" style="color:var(--r);min-height:22px"></div><div class="row"><button class="btn a" onclick="opOk()">${ic("check")} حفظ</button><button class="btn o" onclick="closeM()">${ic("x")} إلغاء</button></div>`);$("#oe").focus();$("#oe").select()}
+function omSet(){const m=document.querySelector("input[name=om]:checked").value,L=CS.log[window._ol],t=L&&CS.items[L.k];if(!t)return;$("#oe").value=m=="t"?t.q:window._lv;$("#ot").textContent=m=="t"?"اكتب الإجمالي الجديد وسيستبدل الكمية المسجلة":"اكتب قيمة الكمية الأخيرة الجديدة وسيُعاد حساب الإجمالي";$("#oe").focus();$("#oe").select()}
+function opOk(){const L=CS.log[window._ol],raw=$("#oe").value,t=L&&CS.items[L.k];if(!t){closeM();return}
  if(!/\d/.test(nd(raw))){$("#oh").textContent="كمية غير صحيحة";return}
  const v=ev(raw);if(v<0){$("#oh").textContent="لا يمكن إدخال كمية سالبة";return}
- closeM();const before=t.q;t.q=v;CS.log.push({k:l.k,n:t.n,t:tmS(),m:"s",d:v,from:before,q:v});CS.log=CS.log.slice(-15);
- saveCS();asv();R.count();toast("تم تعديل إجمالي الكمية")}
+ const m=document.querySelector("input[name=om]:checked").value;
+ if(m=="t"){closeM();const before=t.q;t.q=v;CS.log.push({k:L.k,n:t.n,t:tmS(),m:"s",d:v,from:before,q:v});CS.log=CS.log.slice(-15)}
+ else{if(L.m=="a"){const nt=r3(t.q-L.d+v);if(nt<0){$("#oh").textContent="الإجمالي سيصبح سالبًا";return}closeM();t.q=nt;L.d=v;L.q=nt}else{closeM();t.q=v;L.q=v;L.d=v}}
+ saveCS();asv();R.count();toast(m=="t"?"تم تعديل الإجمالي":"تم تعديل الكمية الأخيرة")}
 function opDel(i){const l=CS.log[i],t=l&&CS.items[l.k];if(!t)return;const k=l.k;
  ask("حذف «"+t.n+"» من الجرد (الإجمالي "+t.q+")؟",()=>{delete CS.items[k];CS.log=CS.log.filter(x=>x.k!=k);saveCS();asv();R.count()})}
-function invWb(){const ks=Object.keys(CS.items),H=["معرف خارجي","باركود","الاسم","cost","price","الكمية في اليد","الكمية المحسوبة","الفرق","وحدة القياس","الموقع","ملاحظة"];
- const rows=ks.map(k=>{const t=CS.items[k];return{"معرف خارجي":t.ext||"","باركود":String(t.bc||""),"الاسم":t.n,"cost":t.cost,"price":t.price,"الكمية في اليد":t.sys,"الكمية المحسوبة":t.q,"الفرق":Math.round((t.q-t.sys)*1000)/1000,"وحدة القياس":t.unit||"","الموقع":t.loc||"","ملاحظة":t.unk?"غير مسجل في النظام":""}});
- const w=XLSX.utils.book_new(),s=XLSX.utils.json_to_sheet(rows,{header:H});s["!cols"]=[{wch:28},{wch:16},{wch:40},{wch:10},{wch:10},{wch:14},{wch:14},{wch:10},{wch:12},{wch:14},{wch:20}];
+function invWb(){const ks=Object.keys(CS.items),H=["معرف خارجي","باركود","الاسم","cost","price","الكمية في اليد","الكمية المحسوبة","الفرق","وحدة القياس","الموقع","فئة المنتج","تصحيح الفئة","ملاحظة"];
+ const rows=ks.map(k=>{const t=CS.items[k];return{"معرف خارجي":t.ext||"","باركود":String(t.bc||""),"الاسم":t.n,"cost":t.cost,"price":t.price,"الكمية في اليد":t.sys,"الكمية المحسوبة":t.q,"الفرق":Math.round((t.q-t.sys)*1000)/1000,"وحدة القياس":t.unit||"","الموقع":t.loc||"","فئة المنتج":t.cat||"","تصحيح الفئة":t.fix||"","ملاحظة":t.unk?"غير مسجل في النظام":""}});
+ const w=XLSX.utils.book_new(),s=XLSX.utils.json_to_sheet(rows,{header:H});s["!cols"]=[{wch:28},{wch:16},{wch:40},{wch:10},{wch:10},{wch:14},{wch:14},{wch:10},{wch:12},{wch:14},{wch:18},{wch:18},{wch:20}];
  XLSX.utils.book_append_sheet(w,s,"الجرد");
  const tv=ks.reduce((a,k)=>a+CS.items[k].q*CS.items[k].cost,0);
- XLSX.utils.book_append_sheet(w,XLSX.utils.aoa_to_sheet([["الموظف",CS.emp],["الفرع",CS.br],["التاريخ",CS.iso],["اسم الملف",CS.fname],["وقت البدء",CS.start],["عدد الأصناف",ks.length],["قيمة الجرد",Math.round(tv*100)/100]]),"بيانات الجرد");return w}
+ XLSX.utils.book_append_sheet(w,XLSX.utils.aoa_to_sheet([["الموظف",CS.emp],["الفرع",CS.br],["التاريخ",CS.iso],["اسم الملف",CS.fname],["وقت البدء",CS.start],["الأقسام",scopeTxt()],["عدد الأصناف",ks.length],["قيمة الجرد",Math.round(tv*100)/100]]),"بيانات الجرد");return w}
 let _at=null,_busy=false,_dirty=false,_rt=null,_fail=false;
 const lsTxt=()=>_fail?"جاري إعادة محاولة الحفظ التلقائي (بياناتك محفوظة داخل البرنامج)":(lastSave?"آخر حفظ تلقائي: "+lastSave:"الحفظ التلقائي مفعّل")+" — الملف: "+(CS?CS.fname:"")+".xlsx";
 const setLS=()=>{const e=$("#ls");if(e)e.innerHTML=ic("clock",16)+" "+esc(lsTxt())};
@@ -303,10 +327,10 @@ async function cdo(){clearTimeout(_at);_at=null;while(_busy)await new Promise(r=
  if(AND){try{await putFile(fn,toBytes(w),"الجرد")}catch(e){toast("تعذر حفظ الملف. بياناتك محفوظة.",1);return}
   modal(`<h3>${ic("check")} تم حفظ ملف الجرد</h3><p class="k">${esc(fn)}</p><div class="row"><button class="btn a" onclick="dl(invWb(),CS.fname+'.xlsx','الجرد')">${ic("share")} مشاركة (واتساب وغيره)</button></div><br><div class="row"><button class="btn r" onclick="cwipe()">${ic("check")} تم — بدء جرد جديد</button></div>`);return}
  const ok=await dl(w,fn,"الجرد");if(!ok){toast("لم يتم إنهاء الجرد لأن حفظ الملف فشل. بياناتك محفوظة.",1);return}cwipe()}
-function cwipe(){closeM();CS=null;cc=null;lastSave="";_dirty=false;_fail=false;saveCS();R.count()}
+function cwipe(){closeM();db.scope=null;save();CS=null;cc=null;lastSave="";_dirty=false;_fail=false;saveCS();R.count()}
 /* ---------- المنتجات والأسعار ---------- */
 async function readWb(f){return/\.csv$/i.test(f.name)?XLSX.read(await f.text(),{type:"string"}):XLSX.read(await f.arrayBuffer(),{type:"array"})}
-const PF=["ext","bc","name","cost","price","qty","unit","loc"],AF=[...PF,"cnt"],FL={ext:"المعرف الخارجي",bc:"الباركود",name:"اسم المنتج",cost:"التكلفة",price:"السعر",qty:"الكمية",unit:"وحدة القياس",loc:"الموقع",cnt:"الكمية المحسوبة"},HW={exact:"مطابق",fuzzy:"تعرّف تقريبي",guess:"تخمين من المحتوى"};
+const PF=["ext","bc","name","cat","cost","price","qty","unit","loc"],AF=[...PF,"cnt","fix"],FL={ext:"المعرف الخارجي",bc:"الباركود",name:"اسم المنتج",cost:"التكلفة",price:"السعر",qty:"الكمية",unit:"وحدة القياس",loc:"الموقع",cnt:"الكمية المحسوبة",cat:"فئة المنتج",fix:"تصحيح الفئة"},HW={exact:"مطابق",fuzzy:"تعرّف تقريبي",guess:"تخمين من المحتوى"};
 const mtx=ws=>XLSX.utils.sheet_to_json(ws,{header:1,defval:"",blankrows:false});
 function mapTbl(r,fields){return '<div class="tw">'+tbl(["الحقل","العمود في ملفك","التعرّف"],fields.map(f=>[FL[f],f in r.col?esc(r.heads[r.col[f]]||("عمود "+(r.col[f]+1))):'<span class="k">— غير موجود</span>',f in r.col?HW[r.how[f]]:""]))+'</div>'}
 function imp(e){const fl=e.target.files[0];e.target.value="";if(!fl)return;
@@ -314,9 +338,9 @@ function imp(e){const fl=e.target.files[0];e.target.value="";if(!fl)return;
   wb.SheetNames.forEach(n=>{const ws=wb.Sheets[n];if(!ws)return;let r;try{r=parseMatrix(mtx(ws),PF)}catch(x){return}r.sheet=n;if(!best||r.rows.length>best.rows.length)best=r});
   if(!best||!best.rows.length){modal(`<h3>${ic("alert")} لم يتم العثور على بيانات</h3><p>لا توجد صفوف منتجات في هذا الملف. تأكد أن الصف الأول يحتوي عناوين الأعمدة (باركود، الاسم، السعر...) وتحته البيانات.</p><button class="btn" id="mok" onclick="closeM()">${ic("check")} حسنًا</button>`);$("#mok").focus();return}
   BI=null;SC=new WeakMap();const I=idx();let n=0,u=0,nb=0;
-  best.rows.forEach(r=>{const o={bc:r.bc,name:r.n||(r.bc?"منتج "+r.bc:"منتج "+r.ext),cost:r.cost,price:r.price,qty:r.sys,unit:r.unit||"قطعة",loc:r.loc,ext:r.ext};if(!o.bc)nb++;const k=pk(o),p=I.get(k);if(p){Object.assign(p,o);u++}else{db.products.push(o);I.set(k,o);n++}});
+  best.rows.forEach(r=>{const o={bc:r.bc,name:r.n||(r.bc?"منتج "+r.bc:"منتج "+r.ext),cost:r.cost,price:r.price,qty:r.sys,unit:r.unit||"قطعة",loc:r.loc,ext:r.ext,cat:r.cat||""};if(!o.bc)nb++;const k=pk(o),p=I.get(k);if(p){Object.assign(p,o);u++}else{db.products.push(o);I.set(k,o);n++}});
   BI=null;save();
-  const weak=PF.some(f=>!(f in best.col)||best.how[f]!="exact"),keyMiss=["bc","name","price"].filter(f=>!(f in best.col));
+  const weak=Object.keys(best.how).some(f=>best.how[f]!="exact"),keyMiss=["bc","name","price"].filter(f=>!(f in best.col));
   modal(`<h3>${ic("check")} تم استيراد المنتجات</h3><p>جديد: <b>${n}</b> — محدّث: <b>${u}</b>${best.skipped?` — صفوف فارغة تم تخطيها: <b>${best.skipped}</b>`:""}<br>إجمالي المنتجات المحفوظة: <b>${db.products.length}</b></p>${mapTbl(best,PF)}${weak?`<div class="warn">${ic("alert",20)} تنبيه: تم التعرّف على بعض الأعمدة تلقائيًا وقد تكون البيانات مختلفة عن المتوقع. راجع الجدول أعلاه وراجع أسعار وأسماء بعض المنتجات.</div>`:""}${keyMiss.length?`<div class="warn">${ic("alert",20)} لم يُعثر على: ${keyMiss.map(f=>FL[f]).join("، ")}${!("bc" in best.col)?" — سيتم البحث بالاسم فقط":""}.</div>`:""}${nb&&("bc" in best.col)?`<div class="warn">${ic("alert",20)} ${nb} منتج بدون باركود (يُبحث عنها بالاسم).</div>`:""}<button class="btn" id="mok" onclick="closeM()">${ic("check")} حسنًا</button>`);$("#mok").focus();R[view]()
  }).catch(err=>{modal(`<h3>${ic("alert")} تعذر قراءة الملف</h3><p>${esc(err&&err.message||err)}</p><p class="k">جرّب حفظ الملف بصيغة Excel (.xlsx) أو CSV ثم أعد المحاولة.</p><button class="btn" id="mok" onclick="closeM()">${ic("check")} حسنًا</button>`);$("#mok").focus()})}
 function pq(v){const r=look(v),p=r&&r.p;$("#sg").innerHTML="";$("#pr").innerHTML=p?`<div style="font-size:28px;font-weight:700">${esc(p.name)}</div><div class="big" style="font-size:76px">${f2(p.price)} ج</div>`:'<p class="k">المنتج غير موجود</p>';$("#pq").select();clearTimeout(window._pt);window._pt=setTimeout(pback,5000)}
@@ -340,23 +364,23 @@ async function agImp(e){const fl=[...e.target.files];e.target.value="";
   try{const wb=await readWb(f);let best=null;
    wb.SheetNames.filter(n=>n!="بيانات الجرد").forEach(n=>{const r=parseMatrix(mtx(wb.Sheets[n]),AF);r.sheet=n;if(!("cnt" in r.col))return;if(!best||(n=="الجرد"&&best.sheet!="الجرد")||(best.sheet!="الجرد"&&r.rows.length>best.rows.length))best=r});
    if(!best||!best.rows.length){toast("الملف لا يحتوي عمود الكمية المحسوبة أو لا توجد صفوف: "+f.name,1);continue}
-   const rows=best.rows;let emp="—",br="—",date="";const ib=wb.Sheets["بيانات الجرد"];
-   if(ib)mtx(ib).forEach(r=>{const k=String(r[0]).trim(),v=String(r[1]).trim();if(k=="الموظف")emp=v||"—";else if(k=="الفرع")br=v||"—";else if(k=="التاريخ")date=v});
-   AG.files.push({fn:f.name,name:f.name.replace(/\.[^.]+$/,""),size:f.size,emp,br,date,rows,cnt:rows.length,val:r2(rows.reduce((s,r)=>s+r.cost*r.cnt,0))})
+   const rows=best.rows;let emp="—",br="—",date="",sc="";const ib=wb.Sheets["بيانات الجرد"];
+   if(ib)mtx(ib).forEach(r=>{const k=String(r[0]).trim(),v=String(r[1]).trim();if(k=="الموظف")emp=v||"—";else if(k=="الفرع")br=v||"—";else if(k=="التاريخ")date=v;else if(k=="الأقسام")sc=v});
+   AG.files.push({sc,fn:f.name,name:f.name.replace(/\.[^.]+$/,""),size:f.size,emp,br,date,rows,cnt:rows.length,val:r2(rows.reduce((s,r)=>s+r.cost*r.cnt,0))})
   }catch(x){toast("تعذر قراءة الملف: "+f.name+" ("+(x&&x.message||x)+")",1)}}
  AG.res=null;R.agg()}
 function agDel(i){AG.files.splice(i,1);AG.res=null;R.agg()}
 function agClr(){ask("مسح كل الملفات المستوردة؟",()=>{AG.files=[];AG.res=null;R.agg()})}
 function agRun(){if(!AG.files.length)return;AG.inc=!!($("#ui")&&$("#ui").checked);AG.res=aggregate(AG.files);AG.rows=repRows(AG.res,AG.inc?db.products:null);AG.S=summary(AG.rows);R.agg();toast("تم التجميع")}
-function wbAgg(res){const H=["معرف خارجي","الباركود","الاسم","cost","price","الكمية في اليد","الكمية المحسوبة","وحدة القياس","الموقع","عدد الملفات"],
- row=e=>({"معرف خارجي":e.ext,"الباركود":String(e.bc),"الاسم":e.n,"cost":e.cost,"price":e.price,"الكمية في اليد":e.sys,"الكمية المحسوبة":e.cnt,"وحدة القياس":e.unit,"الموقع":e.loc,"عدد الملفات":e.nf}),w=XLSX.utils.book_new();
- [[res.stock,"منتجات في المخزون"],[res.non,"منتجات ليست في المخزون"]].forEach(([a,n])=>{const s=XLSX.utils.json_to_sheet(a.map(row),{header:H});s["!cols"]=[{wch:28},{wch:16},{wch:40},{wch:10},{wch:10},{wch:14},{wch:14},{wch:12},{wch:14},{wch:12}];XLSX.utils.book_append_sheet(w,s,n)});return w}
-function wbRep(rows,S){const H=["معرف خارجي","الباركود","الاسم","التكلفة","الكمية في اليد","الكمية المحسوبة","الفرق","قيمة اليد","قيمة المحسوبة","قيمة الفرق","الحالة"],L=rows.length+1,T=L+1,Q="'تقرير الجرد'!";
- const aoa=[H].concat(rows.map(r=>[r.ext,String(r.bc),r.n,r.cost,r.sys,r.cnt,r.diff,r.vSys,r.vCnt,r.vDiff,r.st]));aoa.push(["الإجمالي","","","","","","",r2(rows.reduce((a,r)=>a+r.vSys,0)),S.cnt,r2(rows.reduce((a,r)=>a+r.vDiff,0)),""]);
+function wbAgg(res){const H=["معرف خارجي","الباركود","الاسم","cost","price","الكمية في اليد","الكمية المحسوبة","وحدة القياس","الموقع","فئة المنتج","تصحيح الفئة","عدد الملفات"],
+ row=e=>({"معرف خارجي":e.ext,"الباركود":String(e.bc),"الاسم":e.n,"cost":e.cost,"price":e.price,"الكمية في اليد":e.sys,"الكمية المحسوبة":e.cnt,"وحدة القياس":e.unit,"الموقع":e.loc,"فئة المنتج":e.cat||"","تصحيح الفئة":e.fix||"","عدد الملفات":e.nf}),w=XLSX.utils.book_new();
+ [[res.stock,"منتجات في المخزون"],[res.non,"منتجات ليست في المخزون"]].forEach(([a,n])=>{const s=XLSX.utils.json_to_sheet(a.map(row),{header:H});s["!cols"]=[{wch:28},{wch:16},{wch:40},{wch:10},{wch:10},{wch:14},{wch:14},{wch:12},{wch:14},{wch:18},{wch:18},{wch:12}];XLSX.utils.book_append_sheet(w,s,n)});return w}
+function wbRep(rows,S){const H=["معرف خارجي","الباركود","الاسم","التكلفة","الكمية في اليد","الكمية المحسوبة","الفرق","قيمة اليد","قيمة المحسوبة","قيمة الفرق","الحالة","فئة المنتج","تصحيح الفئة"],L=rows.length+1,T=L+1,Q="'تقرير الجرد'!";
+ const aoa=[H].concat(rows.map(r=>[r.ext,String(r.bc),r.n,r.cost,r.sys,r.cnt,r.diff,r.vSys,r.vCnt,r.vDiff,r.st,r.cat||"",r.fix||""]));aoa.push(["الإجمالي","","","","","","",r2(rows.reduce((a,r)=>a+r.vSys,0)),S.cnt,r2(rows.reduce((a,r)=>a+r.vDiff,0)),"","",""]);
  const ws=XLSX.utils.aoa_to_sheet(aoa),F=(c,v,f)=>{ws[c]={t:"n",v,f}};
  rows.forEach((r,i)=>{const n=i+2;F("G"+n,r.diff,"F"+n+"-E"+n);F("H"+n,r.vSys,"D"+n+"*E"+n);F("I"+n,r.vCnt,"D"+n+"*F"+n);F("J"+n,r.vDiff,"D"+n+"*G"+n)});
  ["H","I","J"].forEach(c=>F(c+T,ws[c+T].v,"SUM("+c+"2:"+c+L+")"));
- ws["!cols"]=[{wch:28},{wch:16},{wch:40},{wch:10},{wch:14},{wch:14},{wch:10},{wch:12},{wch:14},{wch:12},{wch:16}];ws["!autofilter"]={ref:"A1:K"+L};
+ ws["!cols"]=[{wch:28},{wch:16},{wch:40},{wch:10},{wch:14},{wch:14},{wch:10},{wch:12},{wch:14},{wch:12},{wch:16},{wch:18},{wch:18}];ws["!autofilter"]={ref:"A1:M"+L};
  const sm=XLSX.utils.aoa_to_sheet([["البند","القيمة"],["عدد الأصناف المجرودة",S.n],["إجمالي تكلفة الكميات المجرودة",S.cnt],["عدد الأصناف التي لها كمية في اليد",S.nSys],["إجمالي تكلفة المنتجات التي لها كمية في اليد",S.sys],["الفرق (المجرود − اليد)",S.net],["النتيجة",S.res],["إجمالي قيمة العجز على الأصناف",S.short],["إجمالي قيمة الزيادة على الأصناف",S.over]]);
  const G=(c,v,f,t)=>{sm[c]={t:t||"n",v,f}};
  G("B3",S.cnt,Q+"I"+T);G("B4",S.nSys,'COUNTIF('+Q+'E2:E'+L+',">0")');G("B5",S.sys,'SUMIF('+Q+'E2:E'+L+',">0",'+Q+'H2:H'+L+')');G("B6",S.net,"B3-B5");G("B7",S.res,'IF(B6<0,"عجز",IF(B6>0,"زيادة","مطابق"))',"s");G("B8",S.short,'SUMIF('+Q+'J2:J'+L+',"<0")');G("B9",S.over,'SUMIF('+Q+'J2:J'+L+',">0")');
@@ -375,7 +399,7 @@ document.addEventListener("keydown",e=>{
  if(e.code=="KeyS"&&(e.ctrlKey||e.metaKey)&&view=="count"&&CS){e.preventDefault();expInv();return}
  if(k!="ArrowDown"&&k!="ArrowUp"&&k!="ArrowLeft"&&k!="ArrowRight")return;
  if(e.ctrlKey||e.altKey||e.metaKey||e.shiftKey)return;
- const t=e.target,tg=t.tagName;if(tg=="SELECT"||tg=="TEXTAREA")return;
+ const t=e.target,tg=t.tagName;if(tg=="SELECT"||tg=="TEXTAREA"||(tg=="INPUT"&&t.type=="radio"))return;
  const isTxt=tg=="INPUT"&&!["checkbox","radio","button","file"].includes(t.type);
  if(isTxt&&(k=="ArrowLeft"||k=="ArrowRight"))return;
  if(isTxt&&t.hasAttribute("list"))return;
